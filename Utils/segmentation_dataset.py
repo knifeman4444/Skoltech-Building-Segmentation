@@ -15,11 +15,11 @@ class SegmentationDataset(torch.utils.data.Dataset):
     def __init__(self,
                  tile_size,
                  path_to_pics,
-                 path_to_masks=None,                   # None, если нет лейблов
-                 augmentations=default_aug,            # Аугментации
-                 preprocessing=default_preprocessing   # Обработка данных для модели
+                 path_to_masks=None,                   # None if there are no labels
+                 augmentations=default_aug,            # Augmentations
+                 preprocessing=default_preprocessing   # Preprocessing data for the model
                  ):
-        # Загрузка картинок
+        # Load pictures
         self.images = []
         self.prefix_sizes = [0]
         self.tile_size = tile_size
@@ -28,10 +28,10 @@ class SegmentationDataset(torch.utils.data.Dataset):
             for file in sorted(files):
                 self.images.append(cv2.imread(os.path.join(root, file)))
                 h, w, _ = self.images[-1].shape
-                tile_count = (h // tile_size) * (w // tile_size)
+                tile_count = (h // tile_size) * (w // tile_size)  # Count little images in the big image
                 self.prefix_sizes.append(self.prefix_sizes[-1] + tile_count)
 
-        # Загрузка масок
+        # Load masks
         self.has_mask = False
         if path_to_masks is not None:
             self.has_mask = True
