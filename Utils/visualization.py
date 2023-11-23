@@ -23,7 +23,8 @@ def visualize(figsize=(20, 10), **images):
             if image.shape[0] == 1:
                 image = image[0]
 
-            image = image.transpose(1, 2, 0)
+            if len(image.shape) == 3:
+                image = image.transpose(1, 2, 0)
 
         if not isinstance(image, np.ndarray):
             raise ValueError(f'Image must be numpy array or torch tensor. Got {type(image)}')
@@ -51,13 +52,15 @@ def get_overlay(image, mask, alpha=0.5):
         image = image.detach().cpu().numpy()
         if image.shape[0] == 1:
             image = image[0]
-        image = image.transpose(1, 2, 0)
+        if len(image.shape) == 3:
+            image = image.transpose(1, 2, 0)
 
     if isinstance(mask, torch.Tensor):
         mask = mask.detach().cpu().numpy()
         if mask.shape[0] == 1:
             mask = mask[0]
-        mask = mask.transpose(1, 2, 0)
+        if len(image.shape) == 3:
+            mask = mask.transpose(1, 2, 0)
 
     if mask.shape[-1] == 1:
         mask = mask[:, :, 0]
