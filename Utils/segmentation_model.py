@@ -18,7 +18,7 @@ class SegmentationModel:
 
     def train(self, loss, train_loader, val_loader,
               metrics: dict, optimizer, target_metric="f1",
-              epochs=10, wandb_logging=False, path_to_save_model=None,
+              epochs=100, wandb_logging=False, path_to_save_model=None,
               verbose=True):
 
         if wandb_logging:
@@ -51,7 +51,7 @@ class SegmentationModel:
             pbar.set_description(f"Epoch {epoch}")
 
             for batch_idx, (data, target) in pbar:
-                data, target = data.to(self.device), target.to(self.device)
+                data, target = data.to(self.device), target.to(self.device).unsqueeze(1)
                 optimizer.zero_grad()
                 output = self.model(data)
                 loss_value = loss(output, target)
@@ -60,7 +60,7 @@ class SegmentationModel:
 
                 results['train_loss'].append(loss_value.item())
                 for metric_name, metric in metrics.items():
-                    results[metric_name].append(metric(output, target))
+                    results[metric_name].append(metric(output, target).detach().cpu().item())
 
                 pbar.set_postfix({
                     "loss": numpy.mean(results['train_loss']),
@@ -82,13 +82,13 @@ class SegmentationModel:
             self.model.eval()
             with torch.no_grad():
                 for batch_idx, (data, target) in tqdm(enumerate(val_loader), total=len(val_loader)):
-                    data, target = data.to(self.device), target.to(self.device)
+                    data, target = data.to(self.device), target.to(self.device).unsqueeze(1)
                     output = self.model(data)
                     loss_value = loss(output, target)
 
                     results['val_loss'].append(loss_value.item())
                     for metric_name, metric in metrics.items():
-                        results[metric_name].append(metric(output, target))
+                        results[metric_name].append(metric(output, target).detach().cpu().item())
 
             results['val_loss'] = numpy.mean(results['val_loss'])
             for metric_name, metric in metrics.items():
@@ -127,5 +127,3 @@ class SegmentationModel:
                 predictions.append(output.detach().cpu().numpy())
 
         return predictions
-
-
