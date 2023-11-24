@@ -2,6 +2,7 @@ import torch
 import numpy
 import wandb
 from tqdm import tqdm
+import os
 
 TEAM_NAME = "knife_team"
 PROJECT_NAME = "building-segmentation"
@@ -39,9 +40,8 @@ class SegmentationModel:
         best_metric = 0
         train_logs_list, valid_logs_list = [], []
 
-        self.model.train()
-
         for epoch in range(1, epochs + 1):
+            self.model.train()
             results = {}
             for metric_name, metric in metrics.items():
                 results[metric_name] = []
@@ -102,7 +102,8 @@ class SegmentationModel:
                 print(f'New best model! Val {target_metric}: {results[target_metric]}')
                 best_metric = results[target_metric]
                 if path_to_save_model is not None:
-                    torch.save(self.model.state_dict(), path_to_save_model)
+                    model_path = os.path.join(path_to_save_model, f'{self.model_name}_{round(best_metric, 4)}.pth')
+                    torch.save(self.model.state_dict(), model_path)
 
             if wandb_logging:
                 wandb.log({"train_loss": train_logs_list[-1]['train_loss'],
@@ -121,9 +122,14 @@ class SegmentationModel:
         self.model.eval()
         with torch.no_grad():
             predictions = []
-            for batch_idx, data in tqdm(enumerate(test_loader)):
-                data = data.to(self.device)
-                output = self.model(data)
-                predictions.append(output.detach().cpu().numpy())
+            for batch_idx, data in tqdm(enumerate(test_loader), total=len(test_loader)):
+                try:
+                    data, target = data
+                    data, target = data.to(self.device), target.to(self.device).unsqueeze(1)
+                except TypeError:
+                    data = data.to(self.device)
+                output = self.model(data).detach().cpu().numpy()
+                for part in output:
+                    predictions.append(part[0])
 
         return predictions
