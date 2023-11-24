@@ -51,6 +51,7 @@ class SegmentationDataset(torch.utils.data.Dataset):
 
 def get_tiles(tile_size,
               path_to_pics,
+              stride,
               path_to_masks=None,                   # None, если нет лейблов
               ):
     images = []
@@ -61,12 +62,10 @@ def get_tiles(tile_size,
             img = cv2.imread(os.path.join(root, file))
             h, w, _ = img.shape
 
-            for h_coord in range(0, h // tile_size):
-                for w_coord in range(0, w // tile_size):
-                    y = h_coord * tile_size
-                    x = w_coord * tile_size
+            for h_coord in range(0, (h - tile_size) // stride):
+                for w_coord in range(0, (w - tile_size) // stride):
+                    y, x = h_coord * stride, w_coord * stride
                     images.append(img[y: y + tile_size, x: x + tile_size])
-
     # Загрузка масок
     if path_to_masks is not None:
         masks = []
@@ -76,10 +75,9 @@ def get_tiles(tile_size,
                 mask = (mask[:, :, 0] > 0).astype('uint8')
                 h, w = mask.shape
 
-                for h_coord in range(0, h // tile_size):
-                    for w_coord in range(0, w // tile_size):
-                        y = h_coord * tile_size
-                        x = w_coord * tile_size
+                for h_coord in range(0, (h - tile_size) // stride):
+                    for w_coord in range(0, (w - tile_size) // stride):
+                        y, x = h_coord * stride, w_coord * stride
                         masks.append(mask[y: y + tile_size, x: x + tile_size])
 
     return images, masks
@@ -91,7 +89,7 @@ def get_datasets(tile_size,
                  augmentations=default_aug,            # Аугментации
                  preprocessing=default_preprocessing   # Обработка данных для модели
                  ):
-    tiles, masks = get_tiles(tile_size, path_to_pics, path_to_masks)
+    tiles, masks = get_tiles(tile_size, path_to_pics, tile_size // 2, path_to_masks)
     train_tiles, val_tiles, train_masks, val_masks = train_test_split(tiles, masks, test_size=0.2, random_state=42)
     train_dataset = SegmentationDataset(train_tiles, train_masks, augmentations, preprocessing)
     val_dataset = SegmentationDataset(val_tiles, val_masks, default_aug, preprocessing)
