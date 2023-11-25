@@ -83,7 +83,7 @@ class ModelConfig:
     encoder_class = None
 
     def __init__(self, filename, decoder_name, encoder_name, decoder_class, encoder_weights="imagenet", best_threshold=0.5):
-        self.filename = filename
+        self.filename = filename + '.pth'
         self.decoder_name = decoder_name
         self.encoder_name = encoder_name
         self.encoder_weights = encoder_weights
@@ -110,13 +110,15 @@ class ModelConfig:
 
 
 MODELS = [
-    ModelConfig("linknet-efficientnet-b5", "linknet", "efficientnet-b5", smp.Linknet),
-    # ModelConfig("unet", "efficientnet-b5", smp.Unet),
-    ModelConfig("unet++-efficientnet-b5", "unet++", "efficientnet-b5", smp.UnetPlusPlus),
-    ModelConfig("PAN-timm-efficientnet-b5", "PAN", "timm-efficientnet-b5", smp.PAN),
-    ModelConfig("gan_0.8722", "unet", "resnet50", smp.Unet),
-    ModelConfig("gan_0.8989", "unet", "efficientnet-b5", smp.Unet),
-    ModelConfig("gan_0.9011", "unet", "efficientnet-b5", smp.Unet),
+    # ModelConfig("linknet-efficientnet-b5_0.8828", "linknet", "efficientnet-b5", smp.Linknet),
+    ModelConfig("unet-resnet50_0.8759", "unet", "resnet50", smp.Unet),
+    ModelConfig("unet++-efficientnet-b5_0.8857", "unet++", "efficientnet-b5", smp.UnetPlusPlus),
+    ModelConfig("PAN-timm-efficientnet-b5_0.8774", "PAN", "timm-efficientnet-b5", smp.PAN),
+    # ModelConfig("gan_0.8722", "unet", "resnet50", smp.Unet),
+    # ModelConfig("gan_0.8989", "unet", "efficientnet-b5", smp.Unet),
+    # ModelConfig("gan_0.9011", "unet", "efficientnet-b5", smp.Unet),
+    # ModelConfig("MAnet-mit_b4 (no pretrain+preproc)_0.8675", "MAnet", "mit_b4", smp.MAnet),
+
 ]
 
 
@@ -128,17 +130,17 @@ def get_models(path_to_models, device="cuda"):
     :param device: Device to load the models to. Defaults to "cuda".
     :return: A generator that yields tuples of model and model configuration.
     """
-    for file in os.listdir(path_to_models):
-        if not file.endswith(".pth"):
-            continue
+    # for file in os.listdir(path_to_models):
+    #     if not file.endswith(".pth"):
+    #         continue
 
-        for model_config in MODELS:
-            # if model_config.encoder_name not in file or model_config.decoder_name not in file:
-            #     continue
-            file = model_config.filename
-            print(f"Loading model {file}")
-            model = model_config.load_model(os.path.join(path_to_models, file), device=device)
-            yield model, model_config
+    for model_config in MODELS:
+        # if model_config.encoder_name not in file or model_config.decoder_name not in file:
+        #     continue
+        file = model_config.filename
+        print(f"Loading model {file}")
+        model = model_config.load_model(os.path.join(path_to_models, file), device=device)
+        yield model, model_config
 
 
 if __name__ == '__main__':
