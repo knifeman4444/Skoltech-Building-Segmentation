@@ -5,7 +5,7 @@ import segmentation_models_pytorch as smp
 from dataclasses import dataclass
 import os
 from tqdm import tqdm
-from visualization import get_overlay
+from Utils.visualization import get_overlay
 
 
 def get_prediction(model, image: np.ndarray, preprocessing, tile_size=256, padding=64, threshold=0.5):
