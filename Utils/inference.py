@@ -9,6 +9,7 @@ from Utils.visualization import get_overlay
 
 
 def get_prediction(model, image: np.ndarray, preprocessing, tile_size=256, padding=64, threshold=0.5):
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     """
     :param model: The PyTorch model used for prediction
     :param image: The input image as a NumPy array
@@ -36,7 +37,7 @@ def get_prediction(model, image: np.ndarray, preprocessing, tile_size=256, paddi
 
             tile = preprocessing(tile)
 
-            prediction = model(tile).detach().cpu().squeeze().numpy()
+            prediction = model(tile.to(device)).detach().cpu().squeeze().numpy()
 
             prediction = prediction[padding:-padding, padding:-padding]
             prediction = np.where(prediction > threshold, 1, 0)
