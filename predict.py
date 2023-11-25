@@ -46,31 +46,34 @@ MULT = 255 if DEBUG else 1
 
 def do_voting(pics_list, model_names, path_to_predictions, path_to_masks):
     print('Starting voting')
-    thresholds = [0.3, 0.5, 0.7]
+    test = 'test' in path_to_predictions
+    thresholds = [0.5]
     for threshold in thresholds:
-        dir_path = os.path.join(path_to_predictions, f'voting_{threshold}')
+        dir_path = os.path.join(path_to_predictions, f'voting')  # _{threshold}')
         os.makedirs(dir_path, exist_ok=True)
         pbar = tqdm(enumerate(pics_list), total=len(pics_list))
         for ind, pic_path in pbar:
-            sum = None
+            sm = None
             pbar.set_description(f"Processing {pic_path}")
 
-            real_mask = cv2.imread(os.path.join(path_to_masks, pic_path.replace('image', 'mask')), cv2.IMREAD_GRAYSCALE)
+            if not test:
+                real_mask = cv2.imread(os.path.join(path_to_masks, pic_path.replace('image', 'mask')), cv2.IMREAD_GRAYSCALE)
 
             for model_name in model_names:
                 pic = cv2.imread(os.path.join(path_to_predictions, model_name, pic_path), cv2.IMREAD_GRAYSCALE)
-                if sum is None:
-                    sum = pic.astype(np.float32)
+                if sm is None:
+                    sm = pic.astype(np.float32)
                 else:
-                    sum += pic
-            sum = sum / len(model_names) / MULT
+                    sm += pic
+            sm = sm / len(model_names) / MULT
 
-            sum[sum < threshold] = 0
-            sum[sum >= threshold] = 1
+            sm[sm < threshold] = 0
+            sm[sm >= threshold] = 1
 
-            print(f'F1 score for voting with threshold {threshold} is {f1_score(sum, real_mask)}')
+            if not test:
+                print(f'F1 score for voting with threshold {threshold} is {f1_score(sm, real_mask)}')
 
-            Image.fromarray(sum.astype(np.uint8) * MULT, mode='L').save(os.path.join(dir_path, pic_path))
+            Image.fromarray(sm.astype(np.uint8) * MULT, mode='L').save(os.path.join(dir_path, pic_path))
 
 
 def main():
@@ -106,8 +109,6 @@ def main():
     if not os.path.exists(path_to_predictions):
         os.makedirs(path_to_predictions)
     if path_to_overlays is not None:
-        if path_to_masks is None:
-            raise ValueError(f'Path to masks is required to generate overlays')
         if not os.path.exists(path_to_overlays):
             os.makedirs(path_to_overlays)
 
@@ -124,7 +125,7 @@ def main():
 
         assert masks_list is None or len(pics_list) == len(masks_list)
 
-        model_name = f"{model_config.decoder_name}-{model_config.encoder_name}"
+        model_name = model_config.filename
         model_names.append(model_name)
         os.makedirs(os.path.join(path_to_predictions, model_name), exist_ok=True)
         if path_to_overlays is not None:
@@ -160,7 +161,10 @@ def main():
                 Image.fromarray(prediction.astype(np.uint8) * MULT, mode='L').save(os.path.join(path_to_predictions, model_name, pic_path))
 
                 if path_to_overlays is not None:
-                    overlay = get_overlay(pic, red=prediction, green=mask)
+                    if mask is not None:
+                        overlay = get_overlay(pic, red=prediction, green=mask)
+                    else:
+                        overlay = get_overlay(pic, red=prediction)
                     overlay = cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR)
                     cv2.imwrite(os.path.join(path_to_overlays, model_name, pic_path), overlay)
 
