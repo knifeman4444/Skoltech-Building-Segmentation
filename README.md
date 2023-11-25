@@ -53,7 +53,8 @@ As a result, on the validation this increased metrics by a couple of percent.
 ### Reproducing the results
 
 File `pedict.py` contains script with various arguments to run all available models on any data. 
-To use it, first execute `get_ds_and_models.sh` script to download all necessary data and models.
+To use it, first execute `get_ds_and_models.sh` script to download all available models.
+Dataset should be placed in `./data` folder
 Then execute `python predict.py --path_to_pics data/test/images/ --path_to_predictions  data/test/predictions --path_to_models models/ --device cuda` to run all models on test data.
 
 After that, predictions folder will contain subfolders with predictions for all models.
