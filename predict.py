@@ -89,9 +89,11 @@ def main():
     parser.add_argument('--device', type=str, required=False, default='cuda')
     parser.add_argument('--path_to_masks', type=str, required=False)
     parser.add_argument('--path_to_overlays', type=str, required=False)
+    parser.add_argument('--only_voting', type=bool, required=False)
 
     args = parser.parse_args()
 
+    only_voting = args.only_voting
     path_to_pics = args.path_to_pics
     path_to_models = args.path_to_models
     path_to_masks = args.path_to_masks
@@ -130,8 +132,8 @@ def main():
         os.makedirs(os.path.join(path_to_predictions, model_name), exist_ok=True)
         if path_to_overlays is not None:
             os.makedirs(os.path.join(path_to_overlays, model_name), exist_ok=True)
-        # if DEBUG:
-        #     continue
+        if only_voting:
+            continue
 
         if model_config.best_threshold is not None:
             thresholds = [model_config.best_threshold]
