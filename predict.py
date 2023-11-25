@@ -106,8 +106,6 @@ def main():
     if not os.path.exists(path_to_predictions):
         os.makedirs(path_to_predictions)
     if path_to_overlays is not None:
-        if path_to_masks is None:
-            raise ValueError(f'Path to masks is required to generate overlays')
         if not os.path.exists(path_to_overlays):
             os.makedirs(path_to_overlays)
 
@@ -160,7 +158,10 @@ def main():
                 Image.fromarray(prediction.astype(np.uint8) * MULT, mode='L').save(os.path.join(path_to_predictions, model_name, pic_path))
 
                 if path_to_overlays is not None:
-                    overlay = get_overlay(pic, red=prediction, green=mask)
+                    if mask is not None:
+                        overlay = get_overlay(pic, red=prediction, green=mask)
+                    else:
+                        overlay = get_overlay(pic, red=prediction)
                     overlay = cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR)
                     cv2.imwrite(os.path.join(path_to_overlays, model_name, pic_path), overlay)
 
