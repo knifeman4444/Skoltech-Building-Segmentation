@@ -35,6 +35,10 @@ def f1_score(prediction, mask):
 
     return 2 * precision * recall / (precision + recall)
 
+"""
+Example usage:
+python predict.py --path_to_pics data/train/images/ --path_to_predictions  data/train/predictions --path_to_models models/ --device cpu --path_to_masks data/train/masks/ --path_to_overlays data/train/overlays
+"""
 
 def main():
     """
