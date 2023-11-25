@@ -46,31 +46,34 @@ MULT = 255 if DEBUG else 1
 
 def do_voting(pics_list, model_names, path_to_predictions, path_to_masks):
     print('Starting voting')
-    thresholds = [0.3, 0.5, 0.7]
+    test = 'test' in path_to_predictions
+    thresholds = [0.5]
     for threshold in thresholds:
-        dir_path = os.path.join(path_to_predictions, f'voting_{threshold}')
+        dir_path = os.path.join(path_to_predictions, f'voting')  # _{threshold}')
         os.makedirs(dir_path, exist_ok=True)
         pbar = tqdm(enumerate(pics_list), total=len(pics_list))
         for ind, pic_path in pbar:
-            sum = None
+            sm = None
             pbar.set_description(f"Processing {pic_path}")
 
-            real_mask = cv2.imread(os.path.join(path_to_masks, pic_path.replace('image', 'mask')), cv2.IMREAD_GRAYSCALE)
+            if not test:
+                real_mask = cv2.imread(os.path.join(path_to_masks, pic_path.replace('image', 'mask')), cv2.IMREAD_GRAYSCALE)
 
             for model_name in model_names:
                 pic = cv2.imread(os.path.join(path_to_predictions, model_name, pic_path), cv2.IMREAD_GRAYSCALE)
-                if sum is None:
-                    sum = pic.astype(np.float32)
+                if sm is None:
+                    sm = pic.astype(np.float32)
                 else:
-                    sum += pic
-            sum = sum / len(model_names) / MULT
+                    sm += pic
+            sm = sm / len(model_names) / MULT
 
-            sum[sum < threshold] = 0
-            sum[sum >= threshold] = 1
+            sm[sm < threshold] = 0
+            sm[sm >= threshold] = 1
 
-            print(f'F1 score for voting with threshold {threshold} is {f1_score(sum, real_mask)}')
+            if not test:
+                print(f'F1 score for voting with threshold {threshold} is {f1_score(sm, real_mask)}')
 
-            Image.fromarray(sum.astype(np.uint8) * MULT, mode='L').save(os.path.join(dir_path, pic_path))
+            Image.fromarray(sm.astype(np.uint8) * MULT, mode='L').save(os.path.join(dir_path, pic_path))
 
 
 def main():

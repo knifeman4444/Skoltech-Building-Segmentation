@@ -19,8 +19,8 @@ class SegmentationDataset(torch.utils.data.Dataset):
     def __init__(self,
                  tiles,
                  masks,
-                 augmentations,            # Аугментации
-                 preprocessing,   # Обработка данных для модели
+                 augmentations,   # Augmentations
+                 preprocessing,   # Processing data for the model
                  preds=None,
                  rst=None
                  ):
@@ -63,11 +63,12 @@ class SegmentationDataset(torch.utils.data.Dataset):
 def get_tiles(tile_size,
               path_to_pics,
               stride,
-              path_to_masks=None,                   # None, если нет лейблов
+              path_to_masks=None,  # None if there are no labels
               ):
+
+    # Images loading
     images = []
     masks = None
-
     for root, dirs, files in os.walk(path_to_pics):
         for file in sorted(files):
             img = cv2.imread(os.path.join(root, file))
@@ -77,7 +78,8 @@ def get_tiles(tile_size,
                 for w_coord in range(0, (w - tile_size) // stride):
                     y, x = h_coord * stride, w_coord * stride
                     images.append(img[y: y + tile_size, x: x + tile_size])
-    # Загрузка масок
+
+    # Masks loading
     if path_to_masks is not None:
         masks = []
         for root, dirs, files in os.walk(path_to_masks):
@@ -97,8 +99,8 @@ def get_tiles(tile_size,
 def get_datasets(tile_size,
                  path_to_pics,
                  path_to_masks=None,
-                 augmentations=default_aug,            # Аугментации
-                 preprocessing=default_preprocessing   # Обработка данных для модели
+                 augmentations=default_aug,            # Augmentations
+                 preprocessing=default_preprocessing   # Processing data for the model
                  ):
     tiles, masks = get_tiles(tile_size, path_to_pics, tile_size // 2, path_to_masks)
     train_tiles, val_tiles, train_masks, val_masks = train_test_split(tiles, masks, test_size=0.2, random_state=42)
