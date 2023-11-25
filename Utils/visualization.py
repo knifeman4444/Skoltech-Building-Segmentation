@@ -39,14 +39,25 @@ def visualize(figsize=(20, 10), **images):
     plt.show()
 
 
-def get_overlay(image, mask, alpha=0.5):
+def get_overlay(image, red, green=None, alpha=0.5):
     """
-    :param image: The input image. Can be a torch.Tensor or a numpy array.
-    :param mask: The mask to overlay on the image. Can be a torch.Tensor or a numpy array.
-    :param alpha: The opacity of the mask overlay. Default is 0.5.
+    :param image: The input image. Can be a torch.Tensor or a numpy.ndarray.
+    :param red: The red mask to overlay on the image. Can be a torch.Tensor or a numpy.ndarray.
+    :param green: The green mask to overlay on the image (optional). Can be a torch.Tensor or a numpy.ndarray.
+    :param alpha: The transparency of the overlay (default is 0.5).
+    :return: The overlay image as a numpy.ndarray.
 
-    :return: The overlay image with the mask overlayed on top of the input image.
+    This method takes an image and overlays a red mask on it. If a green mask is provided, it overlays both the red and green masks on the image.
 
+    The input image and masks can be either torch.Tensor objects or numpy.ndarray objects. If they are torch.Tensor objects, they are detached from the computation graph, moved to the CPU, and converted to numpy.ndarray objects. If the image or mask has a single channel, the method expands it to 3 channels.
+
+    The red and green masks are preprocessed by expanding their dimensions and converting them to 3 channels. The red mask is then multiplied by [255, 0, 0] to convert it to a red color. If a green mask is provided, it is multiplied by [0, 255, 0] to convert it to a green color. The red and green masks are then added together with the image using the alpha value (transparency) to create the overlay. The overlay image is returned as a numpy.ndarray.
+
+    Example usage:
+        image = torch.randn(3, 256, 256)  # Example input image
+        red_mask = torch.zeros(1, 256, 256)  # Example red mask
+        green_mask = torch.ones(1, 256, 256)  # Example green mask
+        overlay = get_overlay(image, red_mask, green_mask, alpha=0.5)  # Get the overlay image
     """
     if isinstance(image, torch.Tensor):
         image = image.detach().cpu().numpy()
@@ -55,18 +66,31 @@ def get_overlay(image, mask, alpha=0.5):
         if len(image.shape) == 3:
             image = image.transpose(1, 2, 0)
 
-    if isinstance(mask, torch.Tensor):
-        mask = mask.detach().cpu().numpy()
-        if mask.shape[0] == 1:
-            mask = mask[0]
-        if len(image.shape) == 3:
-            mask = mask.transpose(1, 2, 0)
+    def preprocess_mask(mask):
+        if isinstance(mask, torch.Tensor):
+            mask = mask.detach().cpu().numpy()
+            if mask.shape[0] == 1:
+                mask = mask[0]
+            if len(image.shape) == 3:
+                mask = mask.transpose(1, 2, 0)
 
-    if mask.shape[-1] == 1:
-        mask = mask[:, :, 0]
+        if mask.shape[-1] == 1:
+            mask = mask[:, :, 0]
 
-    mask = np.expand_dims(mask, axis=-1)
-    red_mask = np.concatenate([mask, np.zeros_like(mask), np.zeros_like(mask)], axis=-1) * 255
-    overlay = image * (1 - alpha) + red_mask * alpha
+        mask = np.expand_dims(mask, axis=-1)
+
+        return mask
+
+    red = preprocess_mask(red)
+    if green is not None:
+        green = preprocess_mask(green)
+    
+    red_mask = np.concatenate([red, np.zeros_like(red), np.zeros_like(red)], axis=-1) * 255
+
+    if green is not None:
+        green_mask = np.concatenate([np.zeros_like(green), green, np.zeros_like(green)], axis=-1) * 255
+        overlay = (image * (1 - alpha) + alpha * (red_mask + green_mask)).astype(np.uint8)
+    else:
+        overlay = (image * (1 - alpha) + alpha * red_mask).astype(np.uint8)
 
     return overlay.astype(np.uint8)
