@@ -114,6 +114,9 @@ MODELS = [
     # ModelConfig("unet", "efficientnet-b5", smp.Unet),
     ModelConfig("unet++-efficientnet-b5", "unet++", "efficientnet-b5", smp.UnetPlusPlus),
     ModelConfig("PAN-timm-efficientnet-b5", "PAN", "timm-efficientnet-b5", smp.PAN),
+    ModelConfig("gan_0.8722", "unet", "resnet50", smp.Unet),
+    ModelConfig("gan_0.8989", "unet", "efficientnet-b5", smp.Unet),
+    ModelConfig("gan_0.9011", "unet", "efficientnet-b5", smp.Unet),
 ]
 
 

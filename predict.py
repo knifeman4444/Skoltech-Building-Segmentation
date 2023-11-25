@@ -122,7 +122,7 @@ def main():
 
         assert masks_list is None or len(pics_list) == len(masks_list)
 
-        model_name = f"{model_config.decoder_name}-{model_config.encoder_name}"
+        model_name = model_config.filename
         model_names.append(model_name)
         os.makedirs(os.path.join(path_to_predictions, model_name), exist_ok=True)
         if path_to_overlays is not None:
