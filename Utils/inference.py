@@ -109,9 +109,10 @@ class ModelConfig:
 
 
 MODELS = [
-    ModelConfig("linknet", "resnet34", smp.Linknet),
+    ModelConfig("linknet", "efficientnet-b5", smp.Linknet),
+    ModelConfig("unet", "efficientnet-b5", smp.Unet),
+    ModelConfig("unet++", "efficientnet-b5", smp.UnetPlusPlus),
     ModelConfig("PAN", "timm-efficientnet-b5", smp.PAN),
-    # ModelConfig("unet", "resnet34", smp.Unet),
 ]
 
 
