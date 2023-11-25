@@ -40,7 +40,7 @@ Example usage:
 python predict.py --path_to_pics data/train/images/ --path_to_predictions  data/train/predictions --path_to_models models/ --device cpu --path_to_masks data/train/masks/ --path_to_overlays data/train/overlays
 """
 
-DEBUG = True
+DEBUG = False
 MULT = 255 if DEBUG else 1
 
 
@@ -169,11 +169,12 @@ def main():
                     f1_value = f1_score(prediction, mask)
                     f1_scores.append(f1_value)
                     iou_scores.append(iou_value)
-            f1_scores = np.array(f1_scores)
-            score = np.mean(f1_scores)
-            print(f'F1 score for {model_name} with threshold {threshold} is {score:.4f}')
-            print(f'mIoU score for {model_name} with threshold {threshold} is {np.mean(np.array(iou_scores)):.4f}')
-            resulting_f1_scores.append(score)
+            if mask is not None:
+                f1_scores = np.array(f1_scores)
+                score = np.mean(f1_scores)
+                print(f'F1 score for {model_name} with threshold {threshold} is {score:.4f}')
+                print(f'mIoU score for {model_name} with threshold {threshold} is {np.mean(np.array(iou_scores)):.4f}')
+                resulting_f1_scores.append(score)
         if model_config.best_threshold is None:
             best_index = np.argmax(resulting_f1_scores)
             print('=' * 150)

@@ -82,7 +82,8 @@ class ModelConfig:
     decoder_class = None
     encoder_class = None
 
-    def __init__(self, decoder_name, encoder_name, decoder_class, encoder_weights="imagenet", best_threshold=0.5):
+    def __init__(self, filename, decoder_name, encoder_name, decoder_class, encoder_weights="imagenet", best_threshold=0.5):
+        self.filename = filename
         self.decoder_name = decoder_name
         self.encoder_name = encoder_name
         self.encoder_weights = encoder_weights
@@ -109,10 +110,10 @@ class ModelConfig:
 
 
 MODELS = [
-    ModelConfig("linknet", "efficientnet-b5", smp.Linknet),
-    ModelConfig("unet", "efficientnet-b5", smp.Unet),
-    ModelConfig("unet++", "efficientnet-b5", smp.UnetPlusPlus),
-    ModelConfig("PAN", "timm-efficientnet-b5", smp.PAN),
+    ModelConfig("linknet-efficientnet-b5", "linknet", "efficientnet-b5", smp.Linknet),
+    # ModelConfig("unet", "efficientnet-b5", smp.Unet),
+    ModelConfig("unet++-efficientnet-b5", "unet++", "efficientnet-b5", smp.UnetPlusPlus),
+    ModelConfig("PAN-timm-efficientnet-b5", "PAN", "timm-efficientnet-b5", smp.PAN),
 ]
 
 
@@ -129,9 +130,9 @@ def get_models(path_to_models, device="cuda"):
             continue
 
         for model_config in MODELS:
-            if model_config.encoder_name not in file or model_config.decoder_name not in file:
-                continue
-
+            # if model_config.encoder_name not in file or model_config.decoder_name not in file:
+            #     continue
+            file = model_config.filename
             print(f"Loading model {file}")
             model = model_config.load_model(os.path.join(path_to_models, file), device=device)
             yield model, model_config
