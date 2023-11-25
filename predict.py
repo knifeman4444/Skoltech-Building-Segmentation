@@ -59,7 +59,6 @@ def do_voting(pics_list, model_names, path_to_predictions, path_to_masks):
 
             for model_name in model_names:
                 pic = cv2.imread(os.path.join(path_to_predictions, model_name, pic_path), cv2.IMREAD_GRAYSCALE)
-                print(f'F1 score for {model_name} is {f1_score(pic / MULT, real_mask)}')
                 if sum is None:
                     sum = pic.astype(np.float32)
                 else:
@@ -130,36 +129,58 @@ def main():
         os.makedirs(os.path.join(path_to_predictions, model_name), exist_ok=True)
         if path_to_overlays is not None:
             os.makedirs(os.path.join(path_to_overlays, model_name), exist_ok=True)
-        if DEBUG:
-            continue
-        pbar = tqdm(enumerate(pics_list), total=len(pics_list))
-        for ind, pic_path in pbar:
-            pbar.set_description(f"Processing {pic_path}")
+        # if DEBUG:
+        #     continue
 
-            pic = cv2.imread(os.path.join(path_to_pics, pic_path))
+        if model_config.best_threshold is not None:
+            thresholds = [model_config.best_threshold]
+        else:
+            thresholds = [0.0001, 0.001, 0.01, 0.05, 0.1, 0.5]
+        resulting_f1_scores = []
+        for threshold in thresholds:
+            print(f'Using threshold {threshold}')
+            f1_scores = []
+            iou_scores = []
+            pbar = tqdm(enumerate(pics_list), total=len(pics_list))
+            for ind, pic_path in pbar:
+                pbar.set_description(f"Processing {pic_path}")
 
-            mask = None
-            if masks_list is not None:
-                mask = cv2.imread(os.path.join(path_to_masks, masks_list[ind]))
-                mask = mask[:, :, 0]
+                pic = cv2.imread(os.path.join(path_to_pics, pic_path))
 
-            def preprocess_image(image):
-                return torch.tensor(model_config.preprocessing_fn(image)).permute(2, 0, 1).unsqueeze(0).float()
+                mask = None
+                if masks_list is not None:
+                    mask = cv2.imread(os.path.join(path_to_masks, masks_list[ind]))
+                    mask = mask[:, :, 0]
 
-            prediction = get_prediction(model, pic, preprocess_image)
+                def preprocess_image(image):
+                    return torch.tensor(model_config.preprocessing_fn(image)).permute(2, 0, 1).unsqueeze(0).float()
 
+                prediction = get_prediction(model, pic, preprocess_image, threshold=threshold)
 
-            Image.fromarray(prediction.astype(np.uint8) * MULT, mode='L').save(os.path.join(path_to_predictions, model_name, pic_path))
+                Image.fromarray(prediction.astype(np.uint8) * MULT, mode='L').save(os.path.join(path_to_predictions, model_name, pic_path))
 
-            if path_to_overlays is not None:
-                overlay = get_overlay(pic, red=prediction, green=mask)
-                overlay = cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR)
-                cv2.imwrite(os.path.join(path_to_overlays, model_name, pic_path), overlay)
+                if path_to_overlays is not None:
+                    overlay = get_overlay(pic, red=prediction, green=mask)
+                    overlay = cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR)
+                    cv2.imwrite(os.path.join(path_to_overlays, model_name, pic_path), overlay)
 
-            if mask is not None:
-                iou_value = iou(prediction, mask)
-                f1_value = f1_score(prediction, mask)
-                print(f"IoU: {iou_value:.4f}, F1: {f1_value:.4f}")
+                if mask is not None:
+                    iou_value = iou(prediction, mask)
+                    f1_value = f1_score(prediction, mask)
+                    f1_scores.append(f1_value)
+                    iou_scores.append(iou_value)
+            f1_scores = np.array(f1_scores)
+            score = np.mean(f1_scores)
+            print(f'F1 score for {model_name} with threshold {threshold} is {score:.4f}')
+            print(f'mIoU score for {model_name} with threshold {threshold} is {np.mean(np.array(iou_scores)):.4f}')
+            resulting_f1_scores.append(score)
+        if model_config.best_threshold is None:
+            best_index = np.argmax(resulting_f1_scores)
+            print('=' * 150)
+            print('=' * 150)
+            print(f'Attention! Consider using threshold {thresholds[best_index]} for model {model_name}')
+            print('=' * 150)
+            print('=' * 150)
 
     do_voting(pics_list, model_names, path_to_predictions, path_to_masks)
 

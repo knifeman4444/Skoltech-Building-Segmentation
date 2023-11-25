@@ -29,7 +29,7 @@ def get_prediction(model, image: np.ndarray, preprocessing, tile_size=256, paddi
     image = np.pad(image, ((window_size, window_size), (window_size, window_size), (0, 0)))
     result = np.zeros((image.shape[0], image.shape[1]))
     
-    for i in tqdm(range(window_size, w + window_size, tile_size)):
+    for i in range(window_size, w + window_size, tile_size):
         for j in range(window_size, h + window_size, tile_size):
             tile = image[i-padding:i+tile_size+padding, j-padding:j+tile_size+padding]
 
@@ -82,12 +82,13 @@ class ModelConfig:
     decoder_class = None
     encoder_class = None
 
-    def __init__(self, decoder_name, encoder_name, decoder_class, encoder_weights="imagenet"):
+    def __init__(self, decoder_name, encoder_name, decoder_class, encoder_weights="imagenet", best_threshold=0.5):
         self.decoder_name = decoder_name
         self.encoder_name = encoder_name
         self.encoder_weights = encoder_weights
 
         self.decoder_class = decoder_class
+        self.best_threshold = best_threshold
 
         if encoder_weights:
             self.preprocessing_fn = smp.encoders.get_preprocessing_fn(encoder_name, encoder_weights)
