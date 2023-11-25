@@ -27,11 +27,13 @@ To track experiments we used Weights&Biases service:
 
 The best score was achieved with `Unet++` model with `efficientnet-b5` backbone - `~0.76` for building class and `~1.0` for background class
 
-train.ipynb
+[train.ipynb](train.ipynb)
 
 #### Ensemble
 
-TODO
+We computed correlations between predictions (actually just IoU score) and selected 3 models with the lowest correlation.
+Then we voted for each pixel and selected the most frequent class.
+This approach improved the score by one percent.
 
 ### GAN approach
 
@@ -45,7 +47,7 @@ We want the discriminator to predict that our model's mask is from the dataset.
 
 As a result, on the validation this increased metrics by a couple of percent.
 
-GAN.ipynb
+[GAN.ipynb](GAN.ipynb)
 
 
 ### Reproducing the results
@@ -56,13 +58,26 @@ Then execute `python predict.py --path_to_pics data/test/images/ --path_to_predi
 
 After that, predictions folder will contain subfolders with predictions for all models.
 
-You can also compute mectrics by providing `--path_to_masks` argument with path to ground truth masks
+You can also compute metrics by providing `--path_to_masks` argument with path to ground truth masks
 
 
 ## Results
 
-TODO
+The best model (Unet++ with efficientnet-b5 backbone) achieved `0.765` score on public leaderboard
+Ensemble of 3 weakly correlated models improved the score to `0.775`.
+
+Here are some examples of predictions of voted ensemble:
+
+![Example 1](screenshots/res_1.png "Example 1: Residential area")
+
+![Example 2](screenshots/res_2.png "Example 2: Industrial area")
+
+We can see that the prediction quality is quite solid, however, there are some obvious noticeable mistakes. 
+We think that this is due to large amount of noise in the training data, that we unfortunately didn't have time to clean up.
+
+
 
 ## What didn't work
 
-TODO
+1. CRF postprocessing - postprocessing to sharpen the predictions
+2. PatchRefineNet - model that refines the predictions of the segmentation model
